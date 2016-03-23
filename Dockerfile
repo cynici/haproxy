@@ -7,3 +7,5 @@ RUN runDeps='ca-certificates haproxy rsyslog' HOME='/root' \
 	&& rm -rf /root/.gnupg \
         && rm -rf /var/cache/apk/* \
         ;
+
+CMD ["haproxy", "-db", "-f", "/etc/haproxy/haproxy.cfg"]
