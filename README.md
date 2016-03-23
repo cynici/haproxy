@@ -3,7 +3,8 @@
 Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) on Docker Hub:
 
 - Uses [alpine](https://hub.docker.com/_/alpine/) as base image for its tiny footprint instead of debian:testing 
-- Runs service as user *haproxy* in container instead of *root* 
+- Runs service as user *haproxy* in container instead of *root* using HAProxy configuration parameter *user*
+- Included rsyslogd so that logs can be retransmitted to ELK, etc.
 - No *bash*, use *sh* instead if necessary
 
 The image is less than 20 MB!
@@ -18,7 +19,8 @@ To run haproxy as a non-root user as per [Docker recommendation](https://docs.do
 ```
 #!/bin/sh
 set -ux
-usermod -u $RUN_UID haproxy
+rm -f /var/run/rsyslogd.pid
+rsyslogd
 exec "$@"
 ```
 
@@ -30,8 +32,6 @@ haproxy:
   # Comment the line below if you intend to run multiple instances
   # or set unique container name for each instance
   container_name: haproxy
-  environment:
-    - RUN_UID=1001
   ports:
     - "80:80"
     # If you want to proxy SSL, uncomment the line below
