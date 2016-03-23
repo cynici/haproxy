@@ -3,7 +3,7 @@
 Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) on Docker Hub:
 
 - Uses [alpine](https://hub.docker.com/_/alpine/) as base image for its tiny footprint instead of debian:testing 
-- Runs service as user *haproxy* in container instead of *root* Thanks to [tianon](https://github.com/tianon/gosu/) and [mendsley](https://github.com/mendsley/docker-alpine-gosu)
+- Runs service as user *haproxy* in container instead of *root* 
 - No *bash*, use *sh* instead if necessary
 
 The image is less than 20 MB!
@@ -19,7 +19,7 @@ To run haproxy as a non-root user as per [Docker recommendation](https://docs.do
 #!/bin/sh
 set -ux
 usermod -u $RUN_UID haproxy
-exec gosu haproxy "$@"
+exec "$@"
 ```
 
 [docker-compose](https://docs.docker.com/compose/compose-file/) is recommended for. So, here's a sample *docker-compose.yml* for reference. Replace *RUN_UID* with that of the user running the container.
