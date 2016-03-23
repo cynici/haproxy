@@ -3,7 +3,7 @@
 Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) on Docker Hub:
 
 - Uses [alpine](https://hub.docker.com/_/alpine/) as base image for its tiny footprint instead of debian:testing 
-- Runs service as user *haproxy* in container instead of *root*
+- Runs service as user *haproxy* in container instead of *root* Thanks to [tianon](https://github.com/tianon/gosu/)
 - No *bash*, use *sh* instead if necessary
 
 The image is less than 20 MB!
