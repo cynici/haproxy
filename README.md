@@ -9,6 +9,7 @@ Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) o
 
 The image is less than 20 MB!
 
+If, however, you need to rewrite URLs in HTML response body, [HAProxy is not the right tool](http://serverfault.com/questions/336338/using-nginx-to-rewrite-urls-inside-outgoing-responses). Use [nginx](https://github.com/sickp/docker-alpine-nginx) instead.
 
 ## Usage
 
