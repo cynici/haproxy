@@ -4,7 +4,7 @@ Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) o
 
 - Uses [alpine](https://hub.docker.com/_/alpine/) as base image for its tiny footprint instead of debian:testing 
 - Runs service as user *haproxy* in container instead of *root* using HAProxy configuration parameter *user*
-- Included rsyslogd so that logs can be retransmitted to ELK, etc.
+- Included rsyslogd so that logs can be saved to a file and/or retransmitted to ELK, etc.
 - No *bash*, use *sh* instead if necessary
 
 The image is less than 20 MB!
@@ -14,7 +14,9 @@ The image is less than 20 MB!
 
 As usual, craft your own *haproxy.cfg*
 
-To run haproxy as a non-root user as per [Docker recommendation](https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/), create a script and *chmod ugo+x*:
+For performance reason, HAProxy cannot log to a file directly. Logging is via either a separate local or remote syslog daemon. To log to a file, create a ENTRYPOINT script *docker-entrypoint.sh* and make it executable (*chmod ugo+x docker-entrypoint.sh*). 
+
+This entrypoint script will start up a local syslog daemon, and by default, log all HAProxy traffic to */var/log/messages*. You can customize *rsyslogd*, e.g. log to multiple destination, etc. by crafting additional rsyslogd configuration and mount it into the container with VOLUMES as */etc/rsyslog.d/10-extraconfig.conf*
 
 ```
 #!/bin/sh
@@ -24,18 +26,15 @@ rsyslogd
 exec "$@"
 ```
 
-[docker-compose](https://docs.docker.com/compose/compose-file/) is recommended for. So, here's a sample *docker-compose.yml* for reference. Replace *RUN_UID* with that of the user running the container.
+Sample *haproxy.cfg*
 
 ```
 haproxy:
   image: cheewai/haproxy
-  # Comment the line below if you intend to run multiple instances
-  # or set unique container name for each instance
-  container_name: haproxy
   ports:
     - "80:80"
     # If you want to proxy SSL, uncomment the line below
-    - "443:443"
+    #- "443:443"
   volumes:
     # If proxying SSL, you must supply all your certificate PEM(s)
     # in a directory e.g. 'ssl' and your haproxy.cfg lines should
