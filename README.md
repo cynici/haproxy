@@ -6,7 +6,7 @@ Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) o
 - Runs service as user *haproxy* in container instead of *root* using HAProxy configuration parameter *user*
 - Included rsyslogd so that logs can be saved to a file and/or retransmitted to ELK, etc.
 - No *bash*, use *sh* instead if necessary
-- Use [s6](http://skarnet.org/software/s6/) to manage processes and handle signals properly
+- Use [s6](http://skarnet.org/software/s6/) to ensure liveness of rsyslogd and ensure proper signal propagation
 
 The image is less than 20 MB!
 
@@ -53,3 +53,5 @@ haproxy:
 * How to use s6 in a container [https://blog.tutum.co/2015/05/20/s6-made-easy-with-the-s6-overlay/]
 
 * What are s6 services [http://skarnet.org/software/s6/servicedir.html]
+
+* Add s6 to docker image [https://github.com/just-containers/s6-overlay]
