@@ -11,8 +11,5 @@ RUN runDeps='ca-certificates haproxy rsyslog curl' HOME='/root' && \
  rm -rf /root/.gnupg && \
  rm -rf /var/cache/apk/*
 
-# sed -i 's/^\(.*imklog.*\)/#\1/' /etc/rsyslog.conf
-
 COPY s6-rsyslog /etc/services.d/rsyslog
-ENTRYPOINT ["/init"]
 CMD ["haproxy", "-db", "-f", "/etc/haproxy/haproxy.cfg"]
