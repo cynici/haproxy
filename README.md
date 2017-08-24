@@ -1,22 +1,20 @@
-# haproxy in docker
+# haproxy+rsyslog on alpine
 
 Key differences from the official [HAProxy](https://hub.docker.com/_/haproxy/) on Docker Hub:
 
-- Uses [alpine](https://hub.docker.com/_/alpine/) as base image for its tiny footprint instead of debian:testing 
-- Runs service as user *haproxy* in container instead of *root* as set by HAProxy configuration parameter *user*
-- Includes rsyslogd so that logs can be saved to a file and/or retransmitted to ELK, etc.
-- No *bash*, use *sh* instead if necessary
-- Uses [s6](http://skarnet.org/software/s6/) to ensure liveness of rsyslogd and ensure proper signal propagation
+- Run as user *haproxy* instead of *root* as set by HAProxy configuration parameter *user* by setting `RUNUSER_UID` environment variable to the UID value of the actual user outside the container. Optional.
+- Includes rsyslog so that logs can be saved to a file and/or retransmitted to [Graylog](https://marketplace.graylog.org/addons?tag=haproxy), [Elasticsearch-Logstash-Kibana](https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-module-haproxy.html), etc.
+- No *bash*, use *sh* instead
+- Not using [s6-overlay](http://skarnet.org/software/s6/) anymore because the official base image includes `haproxy-systemd-wrapper` which propagates signals properly
+- ~Uses [s6](http://skarnet.org/software/s6/) to ensure liveness of rsyslog and ensure proper signal propagation~
 
 The image is less than 20 MB!
 
 If, however, you need to rewrite URLs in HTML response body, [HAProxy is not the right tool](http://serverfault.com/questions/336338/using-nginx-to-rewrite-urls-inside-outgoing-responses). Use [nginx](https://github.com/sickp/docker-alpine-nginx) instead.
 
-For performance reason, HAProxy does not log to file on its own. Logging is via either a local or remote syslog daemon e.g. rsyslogd etc. That's why this docker image has included *rsyslogd* and  *s6*. The use of *rsyslogd* and *s6* is optional.
+For performance reason, HAProxy does not log to file on its own. Logging is via either a local or remote syslog daemon e.g. rsyslog etc. That's why this docker image has included *rsyslog*.
 
-*s6* may be used to ensure signals are propagated, defunct processes are reaped, processes restarted if necessary.
-
-By default, *rsyslogd* saved HAProxy logs to */var/log/messages*. You can customize *rsyslogd*, e.g. log to multiple destination, etc. by crafting additional rsyslogd configuration and mount it into the container with VOLUMES as */etc/rsyslog.d/10-extraconfig.conf*
+By default, *rsyslog* saved HAProxy logs to */var/log/messages*. You can customize *rsyslogd*, e.g. log to multiple destination, etc. by crafting additional rsyslogd configuration and mount it into the container with VOLUMES as */etc/rsyslog.d/10-extraconfig.conf*
 
 
 ## Usage
@@ -24,50 +22,24 @@ By default, *rsyslogd* saved HAProxy logs to */var/log/messages*. You can custom
 As usual, craft your own *haproxy.cfg*. Next, create a *docker-compose.yml* based on the example below. 
 
 ```
-haproxy:
-  image: cheewai/haproxy
-  ports:
-    - "80:80"
-    # If you want to proxy SSL, uncomment the line below
-    #- "443:443"
-  volumes:
-    # If proxying SSL, you must supply all your certificate PEM(s)
-    # in a directory e.g. 'ssl' and your haproxy.cfg lines should
-    # reference /etc/ssl/private
-    #- ./ssl:/etc/ssl/private
-    - ./haproxy.cfg:/etc/haproxy/haproxy.cfg
+version: '2'
+services:
+  haproxy:
+    image: cheewai/haproxy
+    environment:
+      RUNUSER_UID: 1001
+      RUNUSER_HOME: /etc/haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # If proxying SSL, you must supply all your certificate PEM(s)
+      # in a directory e.g. 'ssl' and your haproxy.cfg lines should
+      # reference /etc/ssl/private
+      #- ./ssl:/etc/ssl/private
+      - ./haproxy.cfg:/etc/haproxy/haproxy.cfg
+    restart: on-failure:5
 ```
-
-
-### HAProxy alone without running rsyslogd
-
-In this case you don't really need s6. The container exits if HAProxy dies. You can compensate for this adding *restart: always* option to *docker-compose.yml* so that the container may be restarted by the Docker daemon.
-
-
-### HAProxy with rsyslogd, without s6
-
-*s6* does add slight delay to container startup/shutdown. Without it, you lose the ability to ensure that *rsyslogd* remains alive. The container exits if HAProxy dies. You can compensate for this adding *restart: always* option to *docker-compose.yml* so that the container may be restarted by the Docker daemon.
-
-- Create *docker-entrypoint.sh* like this:
-
-```
-#!/bin/sh
-set -ux
-rm -f /var/run/rsyslogd.pid
-rsyslogd
-exec "$@"
-```
-- chmod 755 docker-entrypoint.sh
-- Add item *- ./docker-entrypoint.sh:/docker-entrypoint.sh* to *volumes* list in *docker-compose.yml*
-- Add *entrypoint: /docker-compose.yml* to *docker-compose.yml*
-
-
-### HAProxy with rsyslogd and s6
-
-- Add *entrypoint: /init* to *docker-compose.yml*
-
-In doing so, */etc/services.d/rsyslog/run* script already present in the Docker image will be executed automatically by *s6* to bring up *rsyslogd* when the container comes up. *s6* also re-runs the script in the unlikely event that *rsyslogd* dies.
-
 
 ## References
 
