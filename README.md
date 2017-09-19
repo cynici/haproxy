@@ -41,6 +41,35 @@ services:
     restart: on-failure:5
 ```
 
+### To test haproxy.cfg
+
+When testing, you would want the haproxy container to test a new configuration file and exit right away. To do that, adapt your `docker-compose.yml` as follows:
+
+```
+version: '2'
+services:
+  haproxy:
+    image: cheewai/haproxy
+    environment:
+      RUNUSER_UID: 1001
+      RUNUSER_HOME: /etc/haproxy
+    volumes:
+      # If proxying SSL, you must supply all your certificate PEM(s)
+      # in a directory e.g. 'ssl' and your haproxy.cfg lines should
+      # reference /etc/ssl/private
+      #- ./ssl:/etc/ssl/private
+      - ${CFG}:/etc/haproxy/haproxy.cfg:ro
+    # Specify the full pathname instead of just 'haproxy' to bypass haproxy-systemd-wrapper intended for daemon-mode
+    command: ["/usr/local/sbin/haproxy", "-c", "-f", "/etc/haproxy/haproxy.cfg"]
+    restart: never
+```
+
+Then you can validate your new configuration like so:
+
+```
+CFG=/path/to/new/haproxy.cfg docker-compose run --rm -T haproxy
+```
+
 ## References
 
 * How to use s6 in a container [https://blog.tutum.co/2015/05/20/s6-made-easy-with-the-s6-overlay/]
