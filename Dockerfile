@@ -1,4 +1,4 @@
-FROM haproxy:alpine
+FROM haproxy:1.7-alpine
 LABEL maintainer "Cheewai Lai <clai@csir.co.za>"
 
 RUN runDeps='curl rsyslog rsyslog-tls' \
